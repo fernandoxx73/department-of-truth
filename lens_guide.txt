@@ -1,0 +1,20 @@
+**PHASE 1: DISCOVERY**
+*Extract raw data and identify human friction.*
+* **The Signal Extractor:** Translates raw ramblings into business kernels.
+* **User Advocate:** Maps emotional needs and hidden friction.
+
+**PHASE 2: DEFINITION**
+*Structure the product and determine feasibility.*
+* **User Experience Architect:** IA/IxD, and cognitive load.
+* **Product Manager:** MVP and JTBD prioritization.
+* **Technical Lead:** Feasibility and scaling.
+
+**PHASE 3: STRESS-TESTING & RECONSTRUCTION**
+*Break the logic before the market does, then rebuild it.*
+* **The Devil’s Advocate:** Fatal flaws via logic/market failure.
+* **The Solutions Architect:** Rebuilds broken ideas into viable frameworks.
+* **Business Strategist:** ROI and competitive moats.
+
+**PHASE 4: DISTRIBUTION**
+*Get it to the user.*
+* **Growth Marketer:** Distribution and Acquisition logic.

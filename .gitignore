@@ -1,0 +1,30 @@
+# --- PRIVATE CREDENTIALS (TOTAL BLOCK) ---
+config.json
+.env
+api_key.txt
+
+# --- PRIVATE DATA & ARCHIVE (TOTAL BLOCK) ---
+sessions/
+logs/
+backups/
+chat.py
+previous-scripts-backup/
+.DS_Store
+Thumbs.db
+
+# --- TECHNICAL BLOAT (TOTAL BLOCK) ---
+env/
+venv/
+.venv/
+__pycache__/
+*.pyc
+.streamlit/
+
+# --- FILE GATING (KEEP PROMPTS AND LOGIC) ---
+*.pdf
+*.csv
+!requirements.txt
+!strict_rules.txt
+!interceptor_rules.txt
+!lens_guide.txt
+!custom_personas.json
