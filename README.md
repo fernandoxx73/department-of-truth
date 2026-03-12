@@ -1,6 +1,5 @@
 # Department of Truth v5.0 (Experimental Interface)
 
-## Overview
 This is a proof-of-concept experiment. Standard consumer LLM interfaces suffer from predictable failure states during complex workflows. They exhibit conversational sycophancy and lose technical constraints due to sliding window context limits.
 
 The project is an experimental interface built to mitigate those specific behaviours. It tests methods for forcing an LLM to maintain strict parameters and attack unverified logic over extended sessions.
@@ -19,7 +18,7 @@ This script requires a local Python environment. It generates the required `/ses
 
 1. Clone the repository.*
 2. Install dependencies: pip install -r requirements.txt
-3. Generate a personal Gemini API key from Google AI Studio.
+3. Generate a personal Gemini API key from Google AI Studio (start with the Free Tier, and adjust your API limits if Paid Tier!).
 4. Create a config.json file in the root directory using this exact structure:
    {"api_key": "YOUR_GEMINI_API_KEY", "background_model": "gemini-3-flash"}
 5. Execute the application: streamlit run app.py
