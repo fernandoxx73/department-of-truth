@@ -17,11 +17,18 @@ The project is an experimental interface built to mitigate those specific behavi
 ## Local Deployment
 This script requires a local Python environment. It generates the required `/sessions` and `/logs` directories upon execution.
 
-1. Clone the repository.
+1. Clone the repository.*
 2. Install dependencies: pip install -r requirements.txt
-3. Create a config.json file in the root directory:
+3. Generate a personal Gemini API key from Google AI Studio.
+4. Create a config.json file in the root directory using this exact structure:
    {"api_key": "YOUR_GEMINI_API_KEY", "background_model": "gemini-3-flash"}
-4. Execute the application: streamlit run app.py
+5. Execute the application: streamlit run app.py
+
+**Clone? What?**
+If you want to try this and do not know what that means, do this:
+* Download the Code: Open your Terminal and execute the clone command using the repository URL: git clone https://github.com/fernandoxx73/department-of-truth.git
+* Go to the Directory: Navigate into the newly created folder on your machine by typing: cd department-of-truth
+* Back to number 2 above.
 
 ---
 
