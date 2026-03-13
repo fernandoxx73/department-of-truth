@@ -555,7 +555,11 @@ with st.sidebar:
         all_models = {
             f"{m.display_name}": m.name 
             for m in client.models.list() 
-            if "generateContent" in m.supported_actions and "gemini" in m.name.lower()
+            if "generateContent" in m.supported_actions 
+            and "gemini" in m.name.lower()
+            and "deprecated" not in m.name.lower()
+            and "nano" not in m.name.lower()
+            and "banana" not in m.name.lower()
         }
         
         default_target = None
@@ -809,8 +813,13 @@ if prompt := st.chat_input("Input idea...", disabled=(st.session_state.processin
                         break
                         
                     except Exception as e:
-                        final_error = f"API Error: {str(e)}"
-                        break
+                        if "429" in str(e):
+                            st.warning(f"Rate limit hit. Retrying in {5 * (attempt + 1)}s...")
+                            time.sleep(5 * (attempt + 1))
+                            continue
+                        else:
+                            final_error = f"API Error: {str(e)}"
+                            break
                 
                 if not success:
                     st.error(f"Generation failed after 3 attempts. Last reason: {final_error}", icon=":material/error:")
@@ -856,24 +865,35 @@ if st.session_state.messages and not st.session_state.processing and not quota_b
             with st.chat_message("assistant", avatar=":material/groups:"):
                 with st.spinner("Surgical Roundtable actively auditing..."):
                     success = False
-                    try:
-                        start_t = time.time()
-                        res = client.models.generate_content(
-                            model=st.session_state.active_model_id, 
-                            contents=api_payload,
-                            config={'temperature': 0.3}
-                        )
-                        st.session_state.messages.append({"role": "assistant", "content": res.text, "persona_name": "Surgical Roundtable"})
-                        
-                        in_tokens = res.usage_metadata.prompt_token_count
-                        out_tokens = res.usage_metadata.candidates_token_count
-                        usd_cost = calculate_cost(st.session_state.active_model_id, in_tokens, out_tokens)
-                        
-                        increment_quota(in_tokens, out_tokens, usd_cost)
-                        save_session()
-                        success = True
-                    except Exception as e:
-                        st.error(f"API Error: {str(e)}", icon=":material/error:")
+                    final_error = ""
+                    for attempt in range(3):
+                        try:
+                            start_t = time.time()
+                            res = client.models.generate_content(
+                                model=st.session_state.active_model_id, 
+                                contents=api_payload,
+                                config={'temperature': 0.3}
+                            )
+                            st.session_state.messages.append({"role": "assistant", "content": res.text, "persona_name": "Surgical Roundtable"})
+                            
+                            in_tokens = res.usage_metadata.prompt_token_count
+                            out_tokens = res.usage_metadata.candidates_token_count
+                            usd_cost = calculate_cost(st.session_state.active_model_id, in_tokens, out_tokens)
+                            
+                            increment_quota(in_tokens, out_tokens, usd_cost)
+                            save_session()
+                            success = True
+                            break
+                        except Exception as e:
+                            if "429" in str(e):
+                                st.warning(f"Rate limit hit. Retrying in {5 * (attempt + 1)}s...")
+                                time.sleep(5 * (attempt + 1))
+                                continue
+                            else:
+                                final_error = str(e)
+                                break
+                    if not success:
+                        st.error(f"API Error: {final_error}", icon=":material/error:")
                         st.session_state.messages.pop()
                         save_session()
             
@@ -906,24 +926,35 @@ if st.session_state.messages and not st.session_state.processing and not quota_b
             with st.chat_message("assistant", avatar=":material/explore:"):
                 with st.spinner("Mining session for unexplored adjacencies..."):
                     success = False
-                    try:
-                        start_t = time.time()
-                        res = client.models.generate_content(
-                            model=st.session_state.active_model_id, 
-                            contents=api_payload,
-                            config={'temperature': 0.6} 
-                        )
-                        st.session_state.messages.append({"role": "assistant", "content": res.text, "persona_name": "Lateral Forecaster"})
-                        
-                        in_tokens = res.usage_metadata.prompt_token_count
-                        out_tokens = res.usage_metadata.candidates_token_count
-                        usd_cost = calculate_cost(st.session_state.active_model_id, in_tokens, out_tokens)
-                        
-                        increment_quota(in_tokens, out_tokens, usd_cost)
-                        save_session()
-                        success = True
-                    except Exception as e:
-                        st.error(f"API Error: {str(e)}", icon=":material/error:")
+                    final_error = ""
+                    for attempt in range(3):
+                        try:
+                            start_t = time.time()
+                            res = client.models.generate_content(
+                                model=st.session_state.active_model_id, 
+                                contents=api_payload,
+                                config={'temperature': 0.6} 
+                            )
+                            st.session_state.messages.append({"role": "assistant", "content": res.text, "persona_name": "Lateral Forecaster"})
+                            
+                            in_tokens = res.usage_metadata.prompt_token_count
+                            out_tokens = res.usage_metadata.candidates_token_count
+                            usd_cost = calculate_cost(st.session_state.active_model_id, in_tokens, out_tokens)
+                            
+                            increment_quota(in_tokens, out_tokens, usd_cost)
+                            save_session()
+                            success = True
+                            break
+                        except Exception as e:
+                            if "429" in str(e):
+                                st.warning(f"Rate limit hit. Retrying in {5 * (attempt + 1)}s...")
+                                time.sleep(5 * (attempt + 1))
+                                continue
+                            else:
+                                final_error = str(e)
+                                break
+                    if not success:
+                        st.error(f"API Error: {final_error}", icon=":material/error:")
                         st.session_state.messages.pop()
                         save_session()
             
@@ -968,26 +999,37 @@ if st.session_state.messages and not st.session_state.processing and not quota_b
                 with st.chat_message("assistant", avatar=":material/psychology:"):
                     with st.spinner(f"Compiling {art_type}..."):
                         success = False
-                        try:
-                            start_t = time.time()
-                            res = client.models.generate_content(
-                                model=st.session_state.active_model_id, 
-                                contents=api_payload,
-                                config={'temperature': 0.2}
-                            )
-                            st.session_state.messages.append({"role": "assistant", "content": res.text, "persona_name": "Artifact Generator"})
-                            
-                            st.session_state.artifact_locked = True
-                            
-                            in_tokens = res.usage_metadata.prompt_token_count
-                            out_tokens = res.usage_metadata.candidates_token_count
-                            usd_cost = calculate_cost(st.session_state.active_model_id, in_tokens, out_tokens)
-                            
-                            increment_quota(in_tokens, out_tokens, usd_cost)
-                            save_session()
-                            success = True
-                        except Exception as e:
-                            st.error(f"API Error: {str(e)}", icon=":material/error:")
+                        final_error = ""
+                        for attempt in range(3):
+                            try:
+                                start_t = time.time()
+                                res = client.models.generate_content(
+                                    model=st.session_state.active_model_id, 
+                                    contents=api_payload,
+                                    config={'temperature': 0.2}
+                                )
+                                st.session_state.messages.append({"role": "assistant", "content": res.text, "persona_name": "Artifact Generator"})
+                                
+                                st.session_state.artifact_locked = True
+                                
+                                in_tokens = res.usage_metadata.prompt_token_count
+                                out_tokens = res.usage_metadata.candidates_token_count
+                                usd_cost = calculate_cost(st.session_state.active_model_id, in_tokens, out_tokens)
+                                
+                                increment_quota(in_tokens, out_tokens, usd_cost)
+                                save_session()
+                                success = True
+                                break
+                            except Exception as e:
+                                if "429" in str(e):
+                                    st.warning(f"Rate limit hit. Retrying in {5 * (attempt + 1)}s...")
+                                    time.sleep(5 * (attempt + 1))
+                                    continue
+                                else:
+                                    final_error = str(e)
+                                    break
+                        if not success:
+                            st.error(f"API Error: {final_error}", icon=":material/error:")
                             st.session_state.messages.pop()
                             save_session()
                 
