@@ -19,6 +19,13 @@ The engine is designed for user manipulation. You can overwrite the core behavio
 * **Pre-Processing Gatekeeper:** Edit `interceptor_rules.txt` to adjust the strictness and rejection criteria of the input audit model.
 * **Strategic Lenses:** Modify the base personas directly within the Python script or generate temporary custom lenses via the application interface.
 
+## Web Demo vs. Local Execution
+A live demonstration of this interface is hosted via Streamlit Community Cloud. 
+
+**Privacy Warning for Web Users:** The online version operates on a shared server environment. Chat histories and strategic artifacts are saved to a global directory. Your session files are visible to anyone using the web link. Do not input proprietary, confidential, or sensitive information into the public web interface. 
+
+For secure and private execution, you must clone this repository and run the application locally. Local deployment isolates your session data entirely to your own hardware.
+
 ## Local Deployment
 This script requires a local Python environment. It generates the required `/sessions` and `/logs` directories upon execution.
 

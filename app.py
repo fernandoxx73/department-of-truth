@@ -440,9 +440,8 @@ stored_key = get_stored_key()
 if stored_key:
     client = genai.Client(api_key=stored_key)
 else:
-    st.sidebar.header("Web Configuration")
+    st.sidebar.caption("**PUBLIC SERVER WARNING:** Your session logs are visible to anyone using this site. Do not input sensitive data. Export your work to PDF before leaving. Clone the repository for private local execution.")
     user_api_key = st.sidebar.text_input("Enter your Gemini API Key", type="password")
-    st.sidebar.caption("Notice: If using the online version, do not forget to export your work as a PDF. Temporary cloud sessions are not permanently saved.")
     if not user_api_key:
         st.warning("You must enter a Gemini API Key to proceed.")
         st.stop()
