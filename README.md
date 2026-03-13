@@ -13,6 +13,12 @@ The project is an experimental interface built to mitigate those specific behavi
 * **State Synthesis:** Explores methods for taking two diverging conversational logs to extract the core data ledgers and merge them into a single strategic artifact.
 * **Token Arbitration:** Implements local ledger systems to track API calls and token volume to prevent budget overrun during testing.
 
+## Customization & Modular Logic
+The engine is designed for user manipulation. You can overwrite the core behavioural logic to suit specific project goals.
+* **Global Constraints:** Edit `strict_rules.txt` to alter the master system instructions and define your own forbidden vocabulary.
+* **Pre-Processing Gatekeeper:** Edit `interceptor_rules.txt` to adjust the strictness and rejection criteria of the input audit model.
+* **Strategic Lenses:** Modify the base personas directly within the Python script or generate temporary custom lenses via the application interface.
+
 ## Local Deployment
 This script requires a local Python environment. It generates the required `/sessions` and `/logs` directories upon execution.
 

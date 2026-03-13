@@ -437,11 +437,16 @@ if "do_load" in st.session_state and st.session_state.do_load:
             st.error(f"Load Failed: {e}", icon=":material/error:")
 
 stored_key = get_stored_key()
-if not stored_key:
-    st.error("API Key missing in config.json", icon=":material/error:")
-    st.stop()
-
-client = genai.Client(api_key=stored_key)
+if stored_key:
+    client = genai.Client(api_key=stored_key)
+else:
+    st.sidebar.header("Web Configuration")
+    user_api_key = st.sidebar.text_input("Enter your Gemini API Key", type="password")
+    st.sidebar.caption("Notice: If using the online version, do not forget to export your work as a PDF. Temporary cloud sessions are not permanently saved.")
+    if not user_api_key:
+        st.warning("You must enter a Gemini API Key to proceed.")
+        st.stop()
+    client = genai.Client(api_key=user_api_key)
 
 # --- 8. SIDEBAR (LEFT) ---
 with st.sidebar:
@@ -477,7 +482,7 @@ with st.sidebar:
                 
                 if st.session_state.file_context:
                     st.success(f"Semantic Index Ready ({len(st.session_state.file_context['chunks'])} chunks)", icon=":material/check_circle:")
-     
+        
         all_session_files = [f for f in os.listdir(SESSIONS_DIR) if f.endswith(".json")]
         
         saved_files_sorted = sorted(
