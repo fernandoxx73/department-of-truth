@@ -557,9 +557,9 @@ with st.sidebar:
             for m in client.models.list() 
             if "generateContent" in m.supported_actions 
             and "gemini" in m.name.lower()
-            and "deprecated" not in m.name.lower()
-            and "nano" not in m.name.lower()
-            and "banana" not in m.name.lower()
+            and "deprecated" not in f"{m.name} {m.display_name}".lower()
+            and "nano" not in f"{m.name} {m.display_name}".lower()
+            and "banana" not in f"{m.name} {m.display_name}".lower()
         }
         
         default_target = None
