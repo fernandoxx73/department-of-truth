@@ -2,6 +2,7 @@ import streamlit as st
 import os
 import json
 import time
+import copy
 import PyPDF2
 import numpy as np
 from datetime import datetime
@@ -316,17 +317,37 @@ def save_custom_personas(data):
         json.dump(data, f)
 
 def safe_encode(text):
+    """
+    Cleans the 'Hot Mess' of Unicode characters that crash FPDF Helvetica.
+    Swaps smart quotes, emojis, and long dashes for PDF-safe equivalents.
+    """
+    if not text:
+        return ""
+    
+    replacements = {
+        '\u2019': "'",  
+        '\u2018': "'",  
+        '\u201c': '"',  
+        '\u201d': '"',  
+        '\u2013': "-",  
+        '\u2014': "-",  
+        '\u2026': "...", 
+    }
+    
+    for unicode_char, safe_char in replacements.items():
+        text = text.replace(unicode_char, safe_char)
+    
     return text.encode('latin-1', 'replace').decode('latin-1')
 
 def export_to_pdf(messages, session_id):
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Helvetica", "B", 16)
-    pdf.cell(0, 10, f"FLUFFLESS STRATEGY: {session_id}", ln=True)
+    pdf.cell(0, 10, safe_encode(f"FLUFFLESS STRATEGY: {session_id}"), ln=True)
     for msg in messages:
         pdf.set_font("Helvetica", "B", 10)
         role = msg.get('persona_name', msg['role']).upper()
-        pdf.cell(0, 8, f"[{role}]:", ln=True)
+        pdf.cell(0, 8, safe_encode(f"[{role}]:"), ln=True)
         pdf.set_font("Helvetica", size=10)
         pdf.multi_cell(0, 5, safe_encode(msg["content"]))
         pdf.ln(4)
@@ -363,8 +384,8 @@ def execute_strategic_merge(file_a, file_b, client, model_id):
             st.session_state.pinned_insights = pins_a + pins_b
             st.session_state.pinned_assumptions = assump_a + assump_b
             
-            in_tokens = res.usage_metadata.prompt_token_count
-            out_tokens = res.usage_metadata.candidates_token_count
+            in_tokens = getattr(res.usage_metadata, 'prompt_token_count', 0)
+            out_tokens = getattr(res.usage_metadata, 'candidates_token_count', 0)
             usd_cost = calculate_cost(st.session_state.active_model_id, in_tokens, out_tokens)
             
             increment_quota(in_tokens, out_tokens, usd_cost)
@@ -382,7 +403,7 @@ BASE_PERSONAS = {
     "The Devil’s Advocate": {"desc": "Fatal flaws via logic/market failure.", "role": "Find fatal flaws.", "temp": 0.2},
     "The Solutions Architect": {"desc": "Rebuilds broken ideas into viable frameworks.", "role": "Propose structural improvements and alternative execution paths for every identified flaw.", "temp": 0.4},
     "Business Strategist": {"desc": "ROI and competitive moats.", "role": "Analyze market positioning.", "temp": 0.3},
-    "Growth Marketer": {"desc": "Acquisition logic.", "role": "Scale acquisition.", "temp": 0.5}
+    "Growth Marketer": {"desc": "Distribution and Acquisition logic.", "role": "Scale acquisition.", "temp": 0.5}
 }
 
 custom_p = load_custom_personas()
@@ -507,8 +528,12 @@ with st.sidebar:
         f1 = st.selectbox("Branch A", ["--"] + formatted_saved_options)
         f2 = st.selectbox("Branch B", ["--"] + formatted_saved_options)
         if st.button(":material/call_merge: Execute Merge") and f1 != "--" and f2 != "--":
-            execute_strategic_merge(f1, f2, client, st.session_state.active_model_id)
-            st.rerun()
+            _q = load_quotas()
+            if _q["daily_count"] >= _q["daily_limit"] or _q["total_count"] >= _q["total_limit"] or _q["daily_tokens"] >= _q["daily_token_limit"]:
+                st.error("Hard Limit Reached. Merge blocked to protect your budget.", icon=":material/error:")
+            else:
+                execute_strategic_merge(f1, f2, client, st.session_state.active_model_id)
+                st.rerun()
 
     with st.expander(":material/public: Global Truths Ledger"):
         if not st.session_state.global_truths:
@@ -629,7 +654,13 @@ if st.session_state.breadcrumb_path and st.session_state.breadcrumb_path[-1] in 
 col_select, col_help = st.columns([10, 1], vertical_alignment="bottom")
 
 with col_select:
-    sel_p = st.selectbox("Active Persona", persona_list, index=default_persona_index, label_visibility="collapsed")
+    sel_p = st.selectbox(
+        "Active Persona", 
+        options=persona_list, 
+        index=default_persona_index, 
+        format_func=lambda x: f"{x}: {PERSONAS[x]['desc']}",
+        label_visibility="collapsed"
+    )
 
 with col_help:
     with st.popover("Lens Guide"):
@@ -762,7 +793,7 @@ if prompt := st.chat_input("Input idea...", disabled=(st.session_state.processin
         start_t = time.time()
         
         rag_block = f"\nRELEVANT FILE CONTEXT: {relevant_text}" if relevant_text else ""
-        interlock = f"\nGLOBAL TRUTHS: {st.session_state.global_truths}\nSESSION TRUTHS: {st.session_state.pinned_insights}\nUNVERIFIED ASSUMPTIONS: {st.session_state.pinned_assumptions}\nIf 'UNVERIFIED ASSUMPTIONS' exist, you MUST aggressively attack them, demand data, and highlight the risk of proceeding without validation. MANDATORY RULE: Every time you identify a flaw or destroy a concept, you MUST immediately propose a structurally superior alternative or a precise operational improvement.{rag_block}\nMARKET: {st.session_state.market}\nSTYLE: {st.session_state.answer_style}"
+        interlock = f"\nGLOBAL TRUTHS: {st.session_state.global_truths}\nSESSION TRUTHS: {st.session_state.pinned_insights}\nUNVERIFIED ASSUMPTIONS: {st.session_state.pinned_assumptions}\nIf 'UNVERIFIED ASSUMPTIONS' exist, you MUST aggressively attack them, demand data, and highlight the risk of proceeding without validation. MANDATORY RULE: Every time you identify a flaw or destroy a concept, you MUST immediately propose a structurally superior alternative or a precise operational improvement. Use a 'Double-Helix' architecture: alternate between Adversarial Audit and Forward Paths using Functional Equivalence logic. Target ~600 words.{rag_block}\nMARKET: {st.session_state.market}\nSTYLE: {st.session_state.answer_style}"
         full_instr = f"{STRICT_RULES}\nROLE: {PERSONAS[sel_p]['role']}{interlock}{hidden_state}"
         
         sys_instruct = {"role": "system", "parts": [{"text": full_instr}]}
@@ -783,27 +814,71 @@ if prompt := st.chat_input("Input idea...", disabled=(st.session_state.processin
                 
                 for attempt in range(3):
                     try:
-                        res = client.models.generate_content(
+                        # --- STAGE 1: FACT EXTRACTION ---
+                        p1_payload = copy.deepcopy(api_payload)
+                        p1_prompt = f"TASK: Extract every hard claim, metric, and assumption. STRICT RULES: Remove marketing fluff. PINNED TRUTH: {st.session_state.pinned_insights}\nINPUT: {prompt}"
+                        if p1_payload and p1_payload[-1]["role"] == "user":
+                            p1_payload[-1]["parts"] = [{"text": p1_prompt}]
+                        else:
+                            p1_payload.append({"role": "user", "parts": [{"text": p1_prompt}]})
+                            
+                        res1 = client.models.generate_content(
                             model=st.session_state.active_model_id, 
-                            contents=api_payload,
+                            contents=p1_payload,
+                            config={'temperature': 0.0}
+                        )
+                        extracted_data = res1.text
+                        
+                        # --- STAGE 2: ADVERSARIAL AUDIT ---
+                        p2_payload = copy.deepcopy(api_payload)
+                        p2_prompt = f"TASK: Perform an Adversarial Logic Audit.\nPERSONA: {sel_p}\nEXTRACTED DATA: {extracted_data}\nIdentify logic faults or missing requirements. Be blunt."
+                        if p2_payload and p2_payload[-1]["role"] == "user":
+                            p2_payload[-1]["parts"] = [{"text": p2_prompt}]
+                        else:
+                            p2_payload.append({"role": "user", "parts": [{"text": p2_prompt}]})
+
+                        res2 = client.models.generate_content(
+                            model=st.session_state.active_model_id, 
+                            contents=p2_payload,
+                            config={'temperature': 0.0, 'system_instruction': sys_instruct}
+                        )
+                        audit_data = res2.text
+                        
+                        # --- STAGE 3: STRATEGIC SYNTHESIS ---
+                        p3_payload = copy.deepcopy(api_payload)
+                        p3_prompt = f"TASK: Build the resolution report.\nAUDIT DATA: {audit_data}\n\nMANDATORY CONSTRAINTS:\n1. Word Limit: Target ~600 words.\n2. Double-Helix Structure: Every fault MUST be paired with a 'Forward Path'.\n3. Functional Equivalence: Bridge gaps using existing business logic.\n4. Conclude with a Strategic Recap table."
+                        if p3_payload and p3_payload[-1]["role"] == "user":
+                            p3_payload[-1]["parts"] = [{"text": p3_prompt}]
+                        else:
+                            p3_payload.append({"role": "user", "parts": [{"text": p3_prompt}]})
+
+                        res3 = client.models.generate_content(
+                            model=st.session_state.active_model_id, 
+                            contents=p3_payload,
                             config={'temperature': PERSONAS[sel_p]['temp'], 'system_instruction': sys_instruct}
                         )
                         
-                        is_valid, bad_word = verify_pivot_rules(res.text)
+                        is_valid, bad_word = verify_pivot_rules(res3.text)
                         if not is_valid:
                             final_error = f"Audit Flag: Internal system used forbidden word '{bad_word}'."
                             continue
                             
-                        is_hype_valid, hype_msg = verify_hype_meter(res.text)
+                        is_hype_valid, hype_msg = verify_hype_meter(res3.text)
                         if not is_hype_valid:
                             final_error = f"Hype Flag: {hype_msg}"
                             continue
                         
-                        st.markdown(res.text)
-                        st.session_state.messages.append({"role": "assistant", "content": res.text, "persona_name": sel_p})
+                        st.markdown(res3.text)
+                        st.session_state.messages.append({"role": "assistant", "content": res3.text, "persona_name": sel_p})
                         
-                        in_tokens = res.usage_metadata.prompt_token_count
-                        out_tokens = res.usage_metadata.candidates_token_count
+                        # Safe Token Counting using getattr to prevent crashes if metadata is missing
+                        in_tokens = (getattr(res1.usage_metadata, 'prompt_token_count', 0) + 
+                                     getattr(res2.usage_metadata, 'prompt_token_count', 0) + 
+                                     getattr(res3.usage_metadata, 'prompt_token_count', 0))
+                        out_tokens = (getattr(res1.usage_metadata, 'candidates_token_count', 0) + 
+                                      getattr(res2.usage_metadata, 'candidates_token_count', 0) + 
+                                      getattr(res3.usage_metadata, 'candidates_token_count', 0))
+
                         usd_cost = calculate_cost(st.session_state.active_model_id, in_tokens, out_tokens)
                         
                         log_diagnostic(st.session_state.active_model_id, time.time() - start_t, in_tokens + out_tokens)
@@ -876,8 +951,8 @@ if st.session_state.messages and not st.session_state.processing and not quota_b
                             )
                             st.session_state.messages.append({"role": "assistant", "content": res.text, "persona_name": "Surgical Roundtable"})
                             
-                            in_tokens = res.usage_metadata.prompt_token_count
-                            out_tokens = res.usage_metadata.candidates_token_count
+                            in_tokens = getattr(res.usage_metadata, 'prompt_token_count', 0)
+                            out_tokens = getattr(res.usage_metadata, 'candidates_token_count', 0)
                             usd_cost = calculate_cost(st.session_state.active_model_id, in_tokens, out_tokens)
                             
                             increment_quota(in_tokens, out_tokens, usd_cost)
@@ -937,8 +1012,8 @@ if st.session_state.messages and not st.session_state.processing and not quota_b
                             )
                             st.session_state.messages.append({"role": "assistant", "content": res.text, "persona_name": "Lateral Forecaster"})
                             
-                            in_tokens = res.usage_metadata.prompt_token_count
-                            out_tokens = res.usage_metadata.candidates_token_count
+                            in_tokens = getattr(res.usage_metadata, 'prompt_token_count', 0)
+                            out_tokens = getattr(res.usage_metadata, 'candidates_token_count', 0)
                             usd_cost = calculate_cost(st.session_state.active_model_id, in_tokens, out_tokens)
                             
                             increment_quota(in_tokens, out_tokens, usd_cost)
@@ -1012,8 +1087,8 @@ if st.session_state.messages and not st.session_state.processing and not quota_b
                                 
                                 st.session_state.artifact_locked = True
                                 
-                                in_tokens = res.usage_metadata.prompt_token_count
-                                out_tokens = res.usage_metadata.candidates_token_count
+                                in_tokens = getattr(res.usage_metadata, 'prompt_token_count', 0)
+                                out_tokens = getattr(res.usage_metadata, 'candidates_token_count', 0)
                                 usd_cost = calculate_cost(st.session_state.active_model_id, in_tokens, out_tokens)
                                 
                                 increment_quota(in_tokens, out_tokens, usd_cost)

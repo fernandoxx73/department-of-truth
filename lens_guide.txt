@@ -1,20 +1,44 @@
-**PHASE 1: DISCOVERY**
+### PHASE 1: DISCOVERY 
 *Extract raw data and identify human friction.*
-* **The Signal Extractor:** Translates raw ramblings into business kernels.
-* **User Advocate:** Maps emotional needs and hidden friction.
 
-**PHASE 2: DEFINITION**
+**The Signal Extractor:** Translates raw ramblings into business kernels.
+> Use this persona to strip emotional fluff and validate if an unstructured idea actually contains a monetizable core or just empty buzzwords.
+
+**User Advocate:** Maps emotional needs and hidden friction.
+> Useful for identifying why users will actually care, finding the psychological friction in your workflows, and avoiding feature bloat.
+
+---
+
+### PHASE 2: DEFINITION 
 *Structure the product and determine feasibility.*
-* **User Experience Architect:** IA/IxD, and cognitive load.
-* **Product Manager:** MVP and JTBD prioritization.
-* **Technical Lead:** Feasibility and scaling.
 
-**PHASE 3: STRESS-TESTING & RECONSTRUCTION**
+**User Experience Architect:** IA/IxD, and cognitive load.
+> Use this persona to map out the exact screens, user journeys, and information architecture required to make the product functionally usable.
+
+**Product Manager:** MVP and JTBD prioritization.
+> Useful for cutting scope, defining the critical path for launch, and ensuring every feature directly serves a core Job-To-Be-Done.
+
+**Technical Lead:** Feasibility and scaling.
+> Use this persona to audit tech stacks, identify engineering bottlenecks, and prevent you from designing features you cannot afford to build.
+
+---
+
+### PHASE 3: STRESS-TESTING & RECONSTRUCTION 
 *Break the logic before the market does, then rebuild it.*
-* **The Devil’s Advocate:** Fatal flaws via logic/market failure.
-* **The Solutions Architect:** Rebuilds broken ideas into viable frameworks.
-* **Business Strategist:** ROI and competitive moats.
 
-**PHASE 4: DISTRIBUTION**
+**The Devil’s Advocate:** Fatal flaws via logic/market failure.
+> Useful for actively trying to destroy your business model. It finds the unit economic holes and logical fallacies that will kill the product.
+
+**The Solutions Architect:** Rebuilds broken ideas into viable frameworks.
+> Use this persona right after the Devil's Advocate to take the shattered pieces of your strategy and reassemble them into a model that works.
+
+**Business Strategist:** ROI and competitive moats.
+> Useful for defining pricing models, evaluating market positioning, and ensuring your product has a defensible moat against larger competitors.
+
+---
+
+### PHASE 4: DISTRIBUTION 
 *Get it to the user.*
-* **Growth Marketer:** Distribution and Acquisition logic.
+
+**Growth Marketer:** Distribution and Acquisition logic.
+> Use this persona to architect deterministic viral loops, define CAC/LTV mechanics, and build a measurable go-to-market acquisition engine.
