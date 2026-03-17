@@ -545,7 +545,7 @@ with st.sidebar:
                 with col_text:
                     with st.popover(f"{idx+1}. {truth[:30]}..."):
                         st.markdown(f"**Global Truth {idx+1}**")
-                        st.markdown(truth)
+                        st.markdown(truth.replace("$", "\\$"))
                         
                 with col_del:
                     if st.button(":material/delete:", key=f"del_g_{idx}", help="Remove Global Truth"):
@@ -698,7 +698,9 @@ for i, msg in enumerate(st.session_state.messages):
         elif is_pinned_assumption:
             st.error(msg['content'], icon=":material/warning:")
         else:
-            st.markdown(msg["content"])
+            # Escapes the dollar signs so they render as normal text
+            safe_text = msg["content"].replace("$", "\\$")
+            st.markdown(safe_text)
             
         if msg["role"] == "assistant":
             col_truth, col_assume, col_global, col_fork = st.columns(4)
@@ -788,7 +790,7 @@ if prompt := st.chat_input("Input idea...", disabled=(st.session_state.processin
             st.session_state.breadcrumb_path.append(sel_p)
         
         with st.chat_message("user", avatar=":material/person:"):
-            st.markdown(prompt)
+            st.markdown(prompt.replace("$", "\\$"))
         
         start_t = time.time()
         
@@ -868,7 +870,7 @@ if prompt := st.chat_input("Input idea...", disabled=(st.session_state.processin
                             final_error = f"Hype Flag: {hype_msg}"
                             continue
                         
-                        st.markdown(res3.text)
+                        st.markdown(res3.text.replace("$", "\\$"))
                         st.session_state.messages.append({"role": "assistant", "content": res3.text, "persona_name": sel_p})
                         
                         # Safe Token Counting using getattr to prevent crashes if metadata is missing
@@ -1038,7 +1040,6 @@ if st.session_state.messages and not st.session_state.processing and not quota_b
                 st.rerun()
 
     with col_art_sel:
-        # Modified: Added Business Blueprint to the options
         art_type = st.selectbox("Artifact Format", ["Product Requirements Document (PRD)", "Go-to-Market Strategy (GTM)", "Business Blueprint", "Executive Summary"], disabled=is_locked, key="artifact_format_selector")
         
     with col_art_btn:
@@ -1055,7 +1056,6 @@ if st.session_state.messages and not st.session_state.processing and not quota_b
                 st.session_state.processing = True
                 art_instr = f"{STRICT_RULES}\nACT AS A LEAD PRODUCT MANAGER. Synthesize the entire preceding strategic session into a comprehensive, professional {art_type}. Output strictly in Markdown. Do not include conversational filler."
                 
-                # Modified: Appended the strict logic trap if Business Blueprint is selected
                 if art_type == "Business Blueprint":
                     art_instr += """
 
