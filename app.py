@@ -1038,7 +1038,8 @@ if st.session_state.messages and not st.session_state.processing and not quota_b
                 st.rerun()
 
     with col_art_sel:
-        art_type = st.selectbox("Artifact Format", ["Product Requirements Document (PRD)", "Go-to-Market Strategy (GTM)", "Executive Summary"], disabled=is_locked, key="artifact_format_selector")
+        # Modified: Added Business Blueprint to the options
+        art_type = st.selectbox("Artifact Format", ["Product Requirements Document (PRD)", "Go-to-Market Strategy (GTM)", "Business Blueprint", "Executive Summary"], disabled=is_locked, key="artifact_format_selector")
         
     with col_art_btn:
         if is_locked:
@@ -1053,6 +1054,61 @@ if st.session_state.messages and not st.session_state.processing and not quota_b
             if st.button(":material/article: Compile Artifact", use_container_width=True):
                 st.session_state.processing = True
                 art_instr = f"{STRICT_RULES}\nACT AS A LEAD PRODUCT MANAGER. Synthesize the entire preceding strategic session into a comprehensive, professional {art_type}. Output strictly in Markdown. Do not include conversational filler."
+                
+                # Modified: Appended the strict logic trap if Business Blueprint is selected
+                if art_type == "Business Blueprint":
+                    art_instr += """
+
+INSTRUCTION FOR THE LLM: Output the finalized strategy using strictly the following Markdown structure. Do not include introductory or concluding conversational text. Do not use marketing adjectives. Fill in the bracketed data using only the verified facts from the context.
+
+# BUSINESS BLUEPRINT: [Project Name]
+
+> **STATUS:** Audited
+> **PRIMARY CONSTRAINT:** [Insert the biggest limiting factor, e.g., $10k Budget / 3-Month Timeline]
+
+---
+
+## 1. THE CORE MECHANISM
+*(A single, zero-fluff sentence defining exactly what this business does and who pays for it. No buzzwords.)*
+* **The Mechanism:** [Insert sentence]
+* **The Value Exchange:** [Who gives you money] in exchange for [What exact utility].
+
+## 2. HARD CONSTRAINTS (The Pinned Reality)
+*(The immutable facts this project is bound by. If it exceeds these, the project dies.)*
+* **Budget Limit:** [Hard number]
+* **Time to MVP:** [Hard timeline]
+* **Technical Limit:** [Specific bottleneck or required tech]
+
+## 3. STRUCTURAL VULNERABILITIES (The Breakpoints)
+*(The fatal flaws identified during the Audit. No sugar-coating.)*
+* **Risk 1:** [Description of logic failure]
+* **Risk 2:** [Description of logic failure]
+* **Risk 3:** [Description of logic failure]
+
+## 4. ENGINEERED FIXES (The Forward Path)
+*(The structural solutions generated during Synthesis to patch the vulnerabilities above.)*
+* **Fix for Risk 1:** [Actionable solution]
+* **Fix for Risk 2:** [Actionable solution]
+* **Fix for Risk 3:** [Actionable solution]
+
+## 5. EXECUTION MILESTONES (The Roadmap)
+*(Chronological steps to build the mechanism without running out of resources. Must be linear.)*
+
+### Phase 1: Validation (Proving it isn't a hallucination)
+* **Objective:** [What needs to be proven true before spending real money]
+* **Required Action:** [Specific step]
+* **Success Metric:** [Hard number, e.g., 10 paying beta users]
+
+### Phase 2: The Build (Constructing the core)
+* **Objective:** [Building the minimum viable structure]
+* **Required Action:** [Specific step]
+* **Success Metric:** [Hard number]
+
+### Phase 3: Go-To-Market (The Attack Vector)
+* **Objective:** [Acquisition strategy based on the fixed logic]
+* **Sales Channel:** [Where the users actually are]
+* **Conversion Metric:** [What indicates the GTM is working]
+"""
                 
                 trigger_prompt = f"{art_instr}\n\nReview the above context and generate the requested artifact."
                 st.session_state.messages.append({"role": "user", "content": f"Triggered Artifact Compilation: {art_type}"})
