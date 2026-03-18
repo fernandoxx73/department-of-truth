@@ -10,7 +10,7 @@ from google import genai
 from fpdf import FPDF
 
 # --- 1. INITIALIZATION & PRICING LEDGER ---
-st.set_page_config(page_title="Department of Truth v5.0", layout="wide")
+st.set_page_config(page_title="Department of Truth", layout="wide")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__)) 
 SESSIONS_DIR = os.path.join(BASE_DIR, "sessions")
 LOG_DIR = os.path.join(BASE_DIR, "logs")
@@ -103,7 +103,7 @@ def run_bias_interceptor(user_input, client):
 # --- 3. CONTEXT UTILITIES ---
 
 def compact_context(messages, client):
-    if len(messages) < 15:
+    if len(messages) < 9:
         return messages
     
     head = messages[0]
@@ -272,7 +272,7 @@ def read_file_context(file, client):
     
     return {"chunks": chunks, "embeddings": embeddings}
 
-def retrieve_relevant_context(query, file_data, client, top_k=5):
+def retrieve_relevant_context(query, file_data, client, top_k=3):
     if not file_data or not isinstance(file_data, dict) or "embeddings" not in file_data:
         return ""
     
@@ -400,7 +400,7 @@ BASE_PERSONAS = {
     "User Experience Architect": {"desc": "IA/IxD, and cognitive load.", "role": "Architect high-fidelity experiences.", "temp": 0.4},
     "Product Manager": {"desc": "MVP and JTBD prioritization.", "role": "Prioritize value and feasibility.", "temp": 0.3},
     "Technical Lead": {"desc": "Feasibility and scaling.", "role": "Ensure technical viability.", "temp": 0.1},
-    "The Devil’s Advocate": {"desc": "Fatal flaws via logic/market failure.", "role": "Find fatal flaws.", "temp": 0.2},
+    "The Devil’s Advocate": {"desc": "Stress-tests assumptions and identifies friction.", "role": "Find operational and market risks without assuming inevitable failure.", "temp": 0.3},
     "The Solutions Architect": {"desc": "Rebuilds broken ideas into viable frameworks.", "role": "Propose structural improvements and alternative execution paths for every identified flaw.", "temp": 0.4},
     "Business Strategist": {"desc": "ROI and competitive moats.", "role": "Analyze market positioning.", "temp": 0.3},
     "Growth Marketer": {"desc": "Distribution and Acquisition logic.", "role": "Scale acquisition.", "temp": 0.5}
@@ -470,7 +470,7 @@ else:
 
 # --- 8. SIDEBAR (LEFT) ---
 with st.sidebar:
-    st.title("Department of Truth v5.0")
+    st.title("Department of Truth")
     
     st.text_input("Target Market", key="market")
     st.selectbox("Output Resolution", ["Balanced", "Bullet Points Only", "Big Picture / Executive"], key="answer_style")
@@ -795,13 +795,13 @@ if prompt := st.chat_input("Input idea...", disabled=(st.session_state.processin
         start_t = time.time()
         
         rag_block = f"\nRELEVANT FILE CONTEXT: {relevant_text}" if relevant_text else ""
-        interlock = f"\nGLOBAL TRUTHS: {st.session_state.global_truths}\nSESSION TRUTHS: {st.session_state.pinned_insights}\nUNVERIFIED ASSUMPTIONS: {st.session_state.pinned_assumptions}\nIf 'UNVERIFIED ASSUMPTIONS' exist, you MUST aggressively attack them, demand data, and highlight the risk of proceeding without validation. MANDATORY RULE: Every time you identify a flaw or destroy a concept, you MUST immediately propose a structurally superior alternative or a precise operational improvement. Use a 'Double-Helix' architecture: alternate between Adversarial Audit and Forward Paths using Functional Equivalence logic. Target ~600 words.{rag_block}\nMARKET: {st.session_state.market}\nSTYLE: {st.session_state.answer_style}"
+        interlock = f"\nGLOBAL TRUTHS: {st.session_state.global_truths}\nSESSION TRUTHS: {st.session_state.pinned_insights}\nUNVERIFIED ASSUMPTIONS: {st.session_state.pinned_assumptions}\nIf 'UNVERIFIED ASSUMPTIONS' exist, challenge them and highlight the specific risks of proceeding without data. MANDATORY RULE: You are a critical builder, not a doomsayer. Every time you identify a friction point or risk, you MUST immediately propose a viable structural fix. Use a 'Double-Helix' architecture: alternate between Risk Identification and Forward Paths. Target ~600 words.{rag_block}\nMARKET: {st.session_state.market}\nSTYLE: {st.session_state.answer_style}"
         full_instr = f"{STRICT_RULES}\nROLE: {PERSONAS[sel_p]['role']}{interlock}{hidden_state}"
         
         sys_instruct = {"role": "system", "parts": [{"text": full_instr}]}
         
         api_payload = []
-        recent_messages = st.session_state.messages[-10:]
+        recent_messages = st.session_state.messages[-6:]
         for m in recent_messages:
             api_role = "model" if m["role"] == "assistant" else "user"
             if api_payload and api_payload[-1]["role"] == api_role:
@@ -817,12 +817,8 @@ if prompt := st.chat_input("Input idea...", disabled=(st.session_state.processin
                 for attempt in range(3):
                     try:
                         # --- STAGE 1: FACT EXTRACTION ---
-                        p1_payload = copy.deepcopy(api_payload)
                         p1_prompt = f"TASK: Extract every hard claim, metric, and assumption. STRICT RULES: Remove marketing fluff. PINNED TRUTH: {st.session_state.pinned_insights}\nINPUT: {prompt}"
-                        if p1_payload and p1_payload[-1]["role"] == "user":
-                            p1_payload[-1]["parts"] = [{"text": p1_prompt}]
-                        else:
-                            p1_payload.append({"role": "user", "parts": [{"text": p1_prompt}]})
+                        p1_payload = [{"role": "user", "parts": [{"text": p1_prompt}]}]
                             
                         res1 = client.models.generate_content(
                             model=st.session_state.active_model_id, 
@@ -832,12 +828,8 @@ if prompt := st.chat_input("Input idea...", disabled=(st.session_state.processin
                         extracted_data = res1.text
                         
                         # --- STAGE 2: ADVERSARIAL AUDIT ---
-                        p2_payload = copy.deepcopy(api_payload)
                         p2_prompt = f"TASK: Perform an Adversarial Logic Audit.\nPERSONA: {sel_p}\nEXTRACTED DATA: {extracted_data}\nIdentify logic faults or missing requirements. Be blunt."
-                        if p2_payload and p2_payload[-1]["role"] == "user":
-                            p2_payload[-1]["parts"] = [{"text": p2_prompt}]
-                        else:
-                            p2_payload.append({"role": "user", "parts": [{"text": p2_prompt}]})
+                        p2_payload = [{"role": "user", "parts": [{"text": p2_prompt}]}]
 
                         res2 = client.models.generate_content(
                             model=st.session_state.active_model_id, 
@@ -982,7 +974,7 @@ if st.session_state.messages and not st.session_state.processing and not quota_b
         if st.button(":material/explore: Extract New Ideas", use_container_width=True, disabled=is_locked):
             st.session_state.processing = True
             
-            pivot_instr = f"{STRICT_RULES}\nACT AS A RUTHLESS MARKET FORECASTER. Review the preceding conversation. Identify 3 highly viable, distinct product applications or business models we are currently ignoring. \n\nCONSTRAINTS:\n1. Base these ideas ONLY on the technical capabilities, resources, and UX workflows already discussed.\n2. Do not hallucinate new capital, imaginary partnerships, or unverified technologies.\n3. Focus on immediate feasibility, clear ROI, and untapped user segments.\n4. If the current conversation lacks enough substance to generate real adjacencies, state that explicitly and demand more data."
+            pivot_instr = f"{STRICT_RULES}\nACT AS A LATERAL GROWTH STRATEGIST. Review the preceding conversation. Your goal is to find hidden value. Identify 3 highly viable, distinct product applications or business models we are currently ignoring. \n\nCONSTRAINTS:\n1. Base these ideas ONLY on the technical capabilities, resources, and UX workflows already discussed.\n2. Do not hallucinate new capital, imaginary partnerships, or unverified technologies.\n3. Focus on immediate feasibility, clear ROI, and untapped user segments.\n4. Frame these as actionable opportunities. If the current conversation lacks enough substance, do not reject the premise; instead, suggest 2 specific areas we should brainstorm next to unlock new adjacencies."
             
             st.session_state.messages.append({"role": "user", "content": "Triggered Lateral Pivot Analysis."})
             save_session()
