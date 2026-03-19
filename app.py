@@ -795,7 +795,7 @@ if prompt := st.chat_input("Input idea...", disabled=(st.session_state.processin
         start_t = time.time()
         
         rag_block = f"\nRELEVANT FILE CONTEXT: {relevant_text}" if relevant_text else ""
-        interlock = f"\nGLOBAL TRUTHS: {st.session_state.global_truths}\nSESSION TRUTHS: {st.session_state.pinned_insights}\nUNVERIFIED ASSUMPTIONS: {st.session_state.pinned_assumptions}\nIf 'UNVERIFIED ASSUMPTIONS' exist, challenge them and highlight the specific risks of proceeding without data. MANDATORY RULE: You are a critical builder, not a doomsayer. Every time you identify a friction point or risk, you MUST immediately propose a viable structural fix. Use a 'Double-Helix' architecture: alternate between Risk Identification and Forward Paths. Target ~600 words.{rag_block}\nMARKET: {st.session_state.market}\nSTYLE: {st.session_state.answer_style}"
+        interlock = f"\nGLOBAL TRUTHS: {st.session_state.global_truths}\nSESSION TRUTHS: {st.session_state.pinned_insights}\nUNVERIFIED ASSUMPTIONS: {st.session_state.pinned_assumptions}\nIf 'UNVERIFIED ASSUMPTIONS' exist, challenge them constructively. MANDATORY RULE: You are a strategic partner. Do not hallucinate conflicts or assume the user wants to change a working system unless they explicitly state it. If a user states a fact (e.g., 'I use Print on Demand'), treat it as a constraint, not an attack vector. Every time you identify a true friction point, propose a viable structural fix. Be concise. Do not artificially expand your response.{rag_block}\nMARKET: {st.session_state.market}\nSTYLE: {st.session_state.answer_style}"
         full_instr = f"{STRICT_RULES}\nROLE: {PERSONAS[sel_p]['role']}{interlock}{hidden_state}"
         
         sys_instruct = {"role": "system", "parts": [{"text": full_instr}]}
@@ -827,8 +827,8 @@ if prompt := st.chat_input("Input idea...", disabled=(st.session_state.processin
                         )
                         extracted_data = res1.text
                         
-                        # --- STAGE 2: ADVERSARIAL AUDIT ---
-                        p2_prompt = f"TASK: Perform an Adversarial Logic Audit.\nPERSONA: {sel_p}\nEXTRACTED DATA: {extracted_data}\nIdentify logic faults or missing requirements. Be blunt."
+                        # --- STAGE 2: OBJECTIVE AUDIT ---
+                        p2_prompt = f"TASK: Perform an Objective Strategy Audit.\nPERSONA: {sel_p}\nEXTRACTED DATA: {extracted_data}\nIdentify true operational friction or missing requirements. Do not invent problems if the logic is sound. Be constructive and grounded."
                         p2_payload = [{"role": "user", "parts": [{"text": p2_prompt}]}]
 
                         res2 = client.models.generate_content(
@@ -840,7 +840,7 @@ if prompt := st.chat_input("Input idea...", disabled=(st.session_state.processin
                         
                         # --- STAGE 3: STRATEGIC SYNTHESIS ---
                         p3_payload = copy.deepcopy(api_payload)
-                        p3_prompt = f"TASK: Build the resolution report.\nAUDIT DATA: {audit_data}\n\nMANDATORY CONSTRAINTS:\n1. Word Limit: Target ~600 words.\n2. Double-Helix Structure: Every fault MUST be paired with a 'Forward Path'.\n3. Functional Equivalence: Bridge gaps using existing business logic.\n4. Conclude with a Strategic Recap table."
+                        p3_prompt = f"TASK: Build the resolution report.\nAUDIT DATA: {audit_data}\n\nMANDATORY CONSTRAINTS:\n1. Be Concise: Output only what is necessary. Do NOT add fluff or hallucinate issues to make the response longer.\n2. Double-Helix Structure: Every identified risk MUST be paired with a 'Forward Path'.\n3. Functional Equivalence: Bridge gaps using existing business logic.\n4. Conclude with a Strategic Recap table."
                         if p3_payload and p3_payload[-1]["role"] == "user":
                             p3_payload[-1]["parts"] = [{"text": p3_prompt}]
                         else:
