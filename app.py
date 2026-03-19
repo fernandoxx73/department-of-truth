@@ -795,7 +795,7 @@ if prompt := st.chat_input("Input idea...", disabled=(st.session_state.processin
         start_t = time.time()
         
         rag_block = f"\nRELEVANT FILE CONTEXT: {relevant_text}" if relevant_text else ""
-        interlock = f"\nGLOBAL TRUTHS: {st.session_state.global_truths}\nSESSION TRUTHS: {st.session_state.pinned_insights}\nUNVERIFIED ASSUMPTIONS: {st.session_state.pinned_assumptions}\nIf 'UNVERIFIED ASSUMPTIONS' exist, challenge them constructively. MANDATORY RULE: You are a strategic partner. Do not hallucinate conflicts or assume the user wants to change a working system unless they explicitly state it. If a user states a fact (e.g., 'I use Print on Demand'), treat it as a constraint, not an attack vector. Every time you identify a true friction point, propose a viable structural fix. Be concise. Do not artificially expand your response.{rag_block}\nMARKET: {st.session_state.market}\nSTYLE: {st.session_state.answer_style}"
+        interlock = f"\nGLOBAL TRUTHS: {st.session_state.global_truths}\nSESSION TRUTHS: {st.session_state.pinned_insights}\nUNVERIFIED ASSUMPTIONS: {st.session_state.pinned_assumptions}\nIf 'UNVERIFIED ASSUMPTIONS' exist, challenge them constructively. MANDATORY RULE: You are a strategic partner. ZERO-INFERENCE POLICY: Do not invent backstory, assume how the user performed an action, or hallucinate metrics. If data is missing (e.g., 'why' a pitch failed, or exact sales numbers), you MUST NOT guess. Instead, clearly state what data you need from the user to complete the analysis. Every time you identify a true friction point with sufficient data, propose a viable structural fix. Be concise.{rag_block}\nMARKET: {st.session_state.market}\nSTYLE: {st.session_state.answer_style}"
         full_instr = f"{STRICT_RULES}\nROLE: {PERSONAS[sel_p]['role']}{interlock}{hidden_state}"
         
         sys_instruct = {"role": "system", "parts": [{"text": full_instr}]}
@@ -840,7 +840,7 @@ if prompt := st.chat_input("Input idea...", disabled=(st.session_state.processin
                         
                         # --- STAGE 3: STRATEGIC SYNTHESIS ---
                         p3_payload = copy.deepcopy(api_payload)
-                        p3_prompt = f"TASK: Build the resolution report.\nAUDIT DATA: {audit_data}\n\nMANDATORY CONSTRAINTS:\n1. Be Concise: Output only what is necessary. Do NOT add fluff or hallucinate issues to make the response longer.\n2. Double-Helix Structure: Every identified risk MUST be paired with a 'Forward Path'.\n3. Functional Equivalence: Bridge gaps using existing business logic.\n4. Conclude with a Strategic Recap table."
+                        p3_prompt = f"TASK: Build the resolution report.\nAUDIT DATA: {audit_data}\n\nMANDATORY CONSTRAINTS:\n1. Be Concise: Output only what is necessary. ZERO-INFERENCE: Never assume or invent details. \n2. The Branching Path: If you have enough data, use the Double-Helix Structure (Identify Risk -> Propose Forward Path). \n3. The Data Request: If you DO NOT have enough data to propose a solution, halt the analysis on that point and explicitly ask the user a direct question (e.g., 'To analyze this, please provide your pitch script / conversion rate / budget').\n4. Conclude with a Strategic Recap table."
                         if p3_payload and p3_payload[-1]["role"] == "user":
                             p3_payload[-1]["parts"] = [{"text": p3_prompt}]
                         else:
