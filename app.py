@@ -795,7 +795,7 @@ if prompt := st.chat_input("Input idea...", disabled=(st.session_state.processin
         start_t = time.time()
         
         rag_block = f"\nRELEVANT FILE CONTEXT: {relevant_text}" if relevant_text else ""
-        interlock = f"\nGLOBAL TRUTHS: {st.session_state.global_truths}\nSESSION TRUTHS: {st.session_state.pinned_insights}\nUNVERIFIED ASSUMPTIONS: {st.session_state.pinned_assumptions}\nIf 'UNVERIFIED ASSUMPTIONS' exist, challenge them constructively. MANDATORY RULE: You are a strategic partner. ZERO-INFERENCE POLICY: Do not invent backstory, assume how the user performed an action, or hallucinate metrics. If data is missing (e.g., 'why' a pitch failed, or exact sales numbers), you MUST NOT guess. Instead, clearly state what data you need from the user to complete the analysis. Every time you identify a true friction point with sufficient data, propose a viable structural fix. Be concise.{rag_block}\nMARKET: {st.session_state.market}\nSTYLE: {st.session_state.answer_style}"
+        interlock = f"\nGLOBAL TRUTHS: {st.session_state.global_truths}\nSESSION TRUTHS: {st.session_state.pinned_insights}\nUNVERIFIED ASSUMPTIONS: {st.session_state.pinned_assumptions}\nIf 'UNVERIFIED ASSUMPTIONS' exist, challenge them constructively. MANDATORY RULE: You are a strategic partner and an IDEA FLESHER. BENEFIT OF THE DOUBT POLICY: If the user omits a detail, you MUST assume baseline competence. NEVER assume they made the worst possible choice. ZERO-INFERENCE POLICY: Do not invent backstory or hallucinate failures. If data is missing, clearly state what data you need without accusation. Every time you identify friction, paint a picture of the successful version of the idea. Be encouraging but grounded.{rag_block}\nMARKET: {st.session_state.market}\nSTYLE: {st.session_state.answer_style}"
         full_instr = f"{STRICT_RULES}\nROLE: {PERSONAS[sel_p]['role']}{interlock}{hidden_state}"
         
         sys_instruct = {"role": "system", "parts": [{"text": full_instr}]}
@@ -828,7 +828,7 @@ if prompt := st.chat_input("Input idea...", disabled=(st.session_state.processin
                         extracted_data = res1.text
                         
                         # --- STAGE 2: OBJECTIVE AUDIT ---
-                        p2_prompt = f"TASK: Perform an Objective Strategy Audit.\nPERSONA: {sel_p}\nEXTRACTED DATA: {extracted_data}\nIdentify true operational friction or missing requirements. Do not invent problems if the logic is sound. Be constructive and grounded."
+                        p2_prompt = f"TASK: Perform an Objective Strategy Audit.\nPERSONA: {sel_p}\nEXTRACTED DATA: {extracted_data}\nIdentify true operational friction. BENEFIT OF THE DOUBT: If a step is missing from the user's prompt, assume they executed it competently, but note that verifying it is required. STRICT RULE: Do not hallucinate worst-case scenarios to create fake friction. Be constructive and grounded."
                         p2_payload = [{"role": "user", "parts": [{"text": p2_prompt}]}]
 
                         res2 = client.models.generate_content(
@@ -840,7 +840,7 @@ if prompt := st.chat_input("Input idea...", disabled=(st.session_state.processin
                         
                         # --- STAGE 3: STRATEGIC SYNTHESIS ---
                         p3_payload = copy.deepcopy(api_payload)
-                        p3_prompt = f"TASK: Build the resolution report.\nAUDIT DATA: {audit_data}\n\nMANDATORY CONSTRAINTS:\n1. Be Concise: Output only what is necessary. ZERO-INFERENCE: Never assume or invent details. \n2. The Branching Path: If you have enough data, use the Double-Helix Structure (Identify Risk -> Propose Forward Path). \n3. The Data Request: If you DO NOT have enough data to propose a solution, halt the analysis on that point and explicitly ask the user a direct question (e.g., 'To analyze this, please provide your pitch script / conversion rate / budget').\n4. Conclude with a Strategic Recap table."
+                        p3_prompt = f"TASK: Build the resolution report.\nAUDIT DATA: {audit_data}\n\nMANDATORY CONSTRAINTS:\n1. Be Constructive: Output only what is necessary, do NOT shoot the idea down.\n2. The Triple-Helix Structure: You MUST format your response using these three steps:\n   - THE KERNEL: Validate the user's instinct. Explain why this has potential.\n   - THE FRICTION: Point out objective risks based ONLY on stated facts. If data is missing, ask for it neutrally (e.g., 'Assuming you handled X, we still need to verify Y'). DO NOT assume the user made a fatal error.\n   - THE EXPANSION: Propose 2 concrete, exciting next steps to build this into a reality.\n3. Conclude with a Strategic Recap table."
                         if p3_payload and p3_payload[-1]["role"] == "user":
                             p3_payload[-1]["parts"] = [{"text": p3_prompt}]
                         else:
