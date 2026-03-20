@@ -1046,60 +1046,166 @@ if st.session_state.messages and not st.session_state.processing and not quota_b
         else:
             if st.button(":material/article: Compile Artifact", use_container_width=True):
                 st.session_state.processing = True
-                art_instr = f"{STRICT_RULES}\nACT AS A LEAD PRODUCT MANAGER. Synthesize the entire preceding strategic session into a comprehensive, professional {art_type}. Output strictly in Markdown. Do not include conversational filler."
+                
+                # Base instruction ensuring no fluff and forcing COST-AWARE tool recommendations
+                art_instr = f"{STRICT_RULES}\nACT AS A LEAD PRODUCT MANAGER. Synthesize the entire preceding strategic session into a comprehensive, granular, and highly actionable {art_type}. Output strictly in Markdown. Do not include conversational filler. When recommending software, infrastructure, or marketing stacks, ALWAYS define the 'Required Capability' first, then provide a 'Bootstrapped/Free' option and a 'Premium/Scalable' option. Be highly mindful of startup costs."
                 
                 if art_type == "Business Blueprint":
                     art_instr += """
 
-INSTRUCTION FOR THE LLM: Output the finalized strategy using strictly the following Markdown structure. Do not include introductory or concluding conversational text. Do not use marketing adjectives. Fill in the bracketed data using only the verified facts from the context.
+INSTRUCTION: Output using strictly the following Markdown structure. Expand the Execution Milestones into highly detailed, granular micro-steps. For tech stack needs, provide cost-tiered options.
 
 # BUSINESS BLUEPRINT: [Project Name]
 
 > **STATUS:** Audited
-> **PRIMARY CONSTRAINT:** [Insert the biggest limiting factor, e.g., $10k Budget / 3-Month Timeline]
+> **PRIMARY CONSTRAINT:** [Insert the biggest limiting factor]
 
 ---
 
 ## 1. THE CORE MECHANISM
-*(A single, zero-fluff sentence defining exactly what this business does and who pays for it. No buzzwords.)*
+*(A single, zero-fluff sentence defining exactly what this business does and who pays for it.)*
 * **The Mechanism:** [Insert sentence]
 * **The Value Exchange:** [Who gives you money] in exchange for [What exact utility].
 
-## 2. HARD CONSTRAINTS (The Pinned Reality)
-*(The immutable facts this project is bound by. If it exceeds these, the project dies.)*
+## 2. HARD CONSTRAINTS
 * **Budget Limit:** [Hard number]
 * **Time to MVP:** [Hard timeline]
 * **Technical Limit:** [Specific bottleneck or required tech]
 
-## 3. STRUCTURAL VULNERABILITIES (The Breakpoints)
-*(The fatal flaws identified during the Audit. No sugar-coating.)*
+## 3. STRUCTURAL VULNERABILITIES
 * **Risk 1:** [Description of logic failure]
 * **Risk 2:** [Description of logic failure]
-* **Risk 3:** [Description of logic failure]
 
-## 4. ENGINEERED FIXES (The Forward Path)
-*(The structural solutions generated during Synthesis to patch the vulnerabilities above.)*
+## 4. ENGINEERED FIXES
 * **Fix for Risk 1:** [Actionable solution]
 * **Fix for Risk 2:** [Actionable solution]
-* **Fix for Risk 3:** [Actionable solution]
 
-## 5. EXECUTION MILESTONES (The Roadmap)
-*(Chronological steps to build the mechanism without running out of resources. Must be linear.)*
+## 5. EXECUTION MILESTONES (The Step-by-Step Roadmap)
+*(Chronological, highly detailed steps. Include Tech Stack options where applicable.)*
 
-### Phase 1: Validation (Proving it isn't a hallucination)
-* **Objective:** [What needs to be proven true before spending real money]
-* **Required Action:** [Specific step]
+### Phase 1: Validation & Prototyping (Days 1-14)
+* **Objective:** [What needs to be proven true before writing code?]
+* **Step-by-Step Execution:**
+  1. [Micro-step 1: Exact action]
+  2. [Micro-step 2: Exact action]
+* **Tech Stack for Phase 1:** [Capability -> Bootstrapped Tool vs. Premium Tool]
 * **Success Metric:** [Hard number, e.g., 10 paying beta users]
 
-### Phase 2: The Build (Constructing the core)
-* **Objective:** [Building the minimum viable structure]
-* **Required Action:** [Specific step]
-* **Success Metric:** [Hard number]
+### Phase 2: The Build (Days 15-30)
+* **Objective:** [Constructing the minimum viable core]
+* **Step-by-Step Execution:**
+  1. [Micro-step 1: Integration/Workflow step]
+  2. [Micro-step 2: Quality assurance step]
+* **Tech Stack for Phase 2:** [Capability -> Bootstrapped Tool vs. Premium Tool]
+* **Success Metric:** [Hard operational number]
 
-### Phase 3: Go-To-Market (The Attack Vector)
-* **Objective:** [Acquisition strategy based on the fixed logic]
-* **Sales Channel:** [Where the users actually are]
-* **Conversion Metric:** [What indicates the GTM is working]
+### Phase 3: Go-To-Market (Days 31-60)
+* **Step-by-Step Execution:**
+  1. [Micro-step 1: Exact marketing channel and hook]
+  2. [Micro-step 2: Sales script / Ad copy concept]
+* **Conversion Metric:** [What hard number indicates the GTM is working]
+"""
+                elif art_type == "Product Requirements Document (PRD)":
+                    art_instr += """
+
+INSTRUCTION: Use the following structure. Expand features into specific UI/UX flows. For the Technical Architecture, you MUST provide a Bootstrapped (Free/Cheap) option and a Premium (Scalable) option for each capability.
+
+# PRD: [Project Name]
+
+## 1. PRODUCT VISION
+* **The Problem:** [Clear, single sentence]
+* **The Solution:** [How the product mechanically solves it]
+
+## 2. USER WORKFLOW (Step-by-Step)
+*(Trace the exact click-by-click path the user takes.)*
+1. **Entry:** [How they land on the product]
+2. **Interaction:** [Exact steps of the core loop]
+3. **Resolution/Conversion:** [The end state or payment trigger]
+
+## 3. TECHNICAL ARCHITECTURE & COST TIERS
+* **[Capability 1, e.g., Frontend/Form]:**
+  * *Bootstrapped:* [Free/Low-cost tool]
+  * *Premium:* [Paid/Scalable tool]
+* **[Capability 2, e.g., Backend/Automation]:**
+  * *Bootstrapped:* [Free/Low-cost tool]
+  * *Premium:* [Paid/Scalable tool]
+* **[Capability 3, e.g., AI/API]:**
+  * *Bootstrapped:* [Free/Low-cost tool]
+  * *Premium:* [Paid/Scalable tool]
+
+## 4. FEATURE PRIORITIZATION
+### P0 (Must-Have for MVP):
+* [Feature 1]: [Granular description of how it works technically]
+* [Feature 2]: [Granular description]
+
+### P1 (Fast Follows):
+* [Feature 3]: [Granular description]
+
+## 5. EDGE CASES & FAIL STATES
+* **Risk 1:** [What happens if a user inputs bad data?] -> **Fallback:** [System response]
+* **Risk 2:** [Tech/API limit] -> **Fallback:** [System response]
+"""
+                elif art_type == "Go-to-Market Strategy (GTM)":
+                    art_instr += """
+
+INSTRUCTION: Use the following structure. Detail exact marketing channels, estimated budgets, and step-by-step conversion funnels. Include Bootstrapped vs. Premium tool options for marketing infrastructure.
+
+# GTM STRATEGY: [Project Name]
+
+## 1. POSITIONING & PRICING
+* **The Hook:** [One-sentence marketing pitch]
+* **Pricing Model:** [Exact dollar amount and structure]
+* **Target Audience:** [Hyper-specific demographic]
+
+## 2. ACQUISITION CHANNELS (The Attack Vector)
+### Primary Channel: [e.g., Meta Ads, B2B Cold Email, SEO]
+1. **Targeting:** [Specific parameters/lists]
+2. **The Creative/Script:** [Exact angle or draft of the copy]
+3. **The Call-to-Action:** [Where exactly do they click]
+
+### Secondary Channel:
+1. **Execution Step 1:** [Actionable micro-step]
+2. **Execution Step 2:** [Actionable micro-step]
+
+## 3. THE CONVERSION FUNNEL & MARKETING STACK
+*(Step-by-step breakdown of how a click becomes revenue)*
+1. **Landing Page:** [What is the primary H1 and lead magnet?]
+2. **The Trigger:** [The exact moment the user is asked to pay/book]
+3. **Friction Reduction:** [How you build trust, e.g., guarantees, portfolio]
+* **Funnel Tech Stack:** [Capability -> Bootstrapped Tool vs. Premium Tool]
+
+## 4. LAUNCH TIMELINE (Days 1-30)
+* **Week 1:** [Specific granular tasks to prepare launch]
+* **Week 2:** [Specific granular tasks for initial push]
+* **Week 3-4:** [Specific granular tasks for optimization]
+
+## 5. SUCCESS METRICS (KPIs)
+* **CAC Target:** [$X]
+* **Conversion Rate Target:** [X%]
+"""
+                elif art_type == "Executive Summary":
+                    art_instr += """
+
+INSTRUCTION: Use the following structure. Keep it high-level but grounded in hard numbers, identified risks, and immediate next steps.
+
+# EXECUTIVE SUMMARY: [Project Name]
+
+## 1. THE THESIS
+* [1-2 sentences clearly explaining the business, the market gap, and the proposed solution.]
+
+## 2. UNIT ECONOMICS & PROFITABILITY
+* **Revenue Stream:** [How it makes money, specific price points]
+* **Cost Structure:** [Main expenses, specific tools/labor]
+* **Margin/Viability:** [Why this makes financial sense]
+
+## 3. IDENTIFIED RISKS & MITIGATION
+* **Operational Risk:** [Specific friction point] -> **Mitigation:** [Specific fix]
+* **Market Risk:** [Specific friction point] -> **Mitigation:** [Specific fix]
+
+## 4. IMMEDIATE NEXT STEPS (Next 48 Hours)
+1. [Highly specific, granular action item]
+2. [Highly specific, granular action item]
+3. [Highly specific, granular action item]
 """
                 
                 trigger_prompt = f"{art_instr}\n\nReview the above context and generate the requested artifact."
