@@ -795,7 +795,10 @@ if prompt := st.chat_input("Input idea...", disabled=(st.session_state.processin
         start_t = time.time()
         
         rag_block = f"\nRELEVANT FILE CONTEXT: {relevant_text}" if relevant_text else ""
-        interlock = f"\nGLOBAL TRUTHS: {st.session_state.global_truths}\nSESSION TRUTHS: {st.session_state.pinned_insights}\nUNVERIFIED ASSUMPTIONS: {st.session_state.pinned_assumptions}\nIf 'UNVERIFIED ASSUMPTIONS' exist, challenge them constructively. MANDATORY RULE: You are a strategic partner and an IDEA FLESHER. BENEFIT OF THE DOUBT: Assume baseline competence. ZERO-INFERENCE: Do not invent backstory. If data is missing, clearly state what data you need. TONE MANDATE: Use ZERO buzzwords. Be blunt, direct, and conversational. Speak in plain English.{rag_block}\nMARKET: {st.session_state.market}\nSTYLE: {st.session_state.answer_style}"
+        
+        # --- DYNAMIC CONTEXT & PLAIN ENGLISH INTERLOCK ---
+        interlock = f"\nGLOBAL TRUTHS: {st.session_state.global_truths}\nSESSION TRUTHS: {st.session_state.pinned_insights}\nUNVERIFIED ASSUMPTIONS: {st.session_state.pinned_assumptions}\nIf 'UNVERIFIED ASSUMPTIONS' exist, challenge them constructively. MANDATORY RULE: You are a strategic partner and an IDEA FLESHER. BENEFIT OF THE DOUBT: Assume baseline competence. ZERO-INFERENCE: Do not invent backstory. CONTEXT AWARENESS: Analyze the user's specific industry. Do not blindly apply SaaS/tech jargon (like assuming 'presentation' means UI) if their business is in a different sector. Adapt your vocabulary to match their actual domain. TONE MANDATE: Use ZERO buzzwords. Be blunt, direct, and conversational. Speak in plain English.{rag_block}\nMARKET: {st.session_state.market}\nSTYLE: {st.session_state.answer_style}"
+        
         full_instr = f"{STRICT_RULES}\nROLE: {PERSONAS[sel_p]['role']}{interlock}{hidden_state}"
         
         sys_instruct = {"role": "system", "parts": [{"text": full_instr}]}
@@ -827,8 +830,8 @@ if prompt := st.chat_input("Input idea...", disabled=(st.session_state.processin
                         )
                         extracted_data = res1.text
                         
-                        # --- STAGE 2: OBJECTIVE AUDIT ---
-                        p2_prompt = f"TASK: Perform an Objective Strategy Audit.\nPERSONA: {sel_p}\nEXTRACTED DATA: {extracted_data}\nIdentify true operational friction. BENEFIT OF THE DOUBT: If a step is missing from the user's prompt, assume they executed it competently, but note that verifying it is required. STRICT RULE: Do not hallucinate worst-case scenarios to create fake friction. Be constructive and grounded."
+                        # --- STAGE 2: OBJECTIVE AUDIT (WITH ALIGNMENT FIX) ---
+                        p2_prompt = f"TASK: Perform an Objective Strategy Audit.\nPERSONA: {sel_p}\nEXTRACTED DATA: {extracted_data}\nIdentify true operational friction. CRITICAL RULE: If the user is agreeing with, adopting, or expanding on a solution we previously suggested, DO NOT audit it for flaws again. Shift immediately from 'critique' mode to 'execution' mode and help them build it. BENEFIT OF THE DOUBT: If a step is missing, assume they executed it competently, but note that verifying it is required. STRICT RULE: Do not hallucinate worst-case scenarios to create fake friction. Be constructive and grounded."
                         p2_payload = [{"role": "user", "parts": [{"text": p2_prompt}]}]
 
                         res2 = client.models.generate_content(
@@ -838,7 +841,7 @@ if prompt := st.chat_input("Input idea...", disabled=(st.session_state.processin
                         )
                         audit_data = res2.text
                         
-                        # --- STAGE 3: STRATEGIC SYNTHESIS ---
+                        # --- STAGE 3: STRATEGIC SYNTHESIS (WITH PLAIN ENGLISH HEADERS) ---
                         p3_payload = copy.deepcopy(api_payload)
                         p3_prompt = f"TASK: Build the resolution report.\nAUDIT DATA: {audit_data}\n\nMANDATORY CONSTRAINTS:\n1. Be Constructive & Direct: Output only what is necessary using plain English. Use ZERO buzzwords. Use short paragraphs, bulleted lists, and aggressive bolding for key concepts to ensure the text is highly scannable.\n2. The Triple-Helix Structure: You MUST format your response using these three specific headers:\n   - THE BIG IDEA: Validate the user's instinct. Explain why this has potential.\n   - THE PROBLEMS: Point out objective risks based ONLY on stated facts. If data is missing, ask for it neutrally (e.g., 'Assuming you handled X, we still need to verify Y').\n   - WHAT TO DO NEXT: Propose 2 concrete, highly specific next steps to build this into a reality.\n3. Conclude with a Strategic Recap table."
                         if p3_payload and p3_payload[-1]["role"] == "user":
